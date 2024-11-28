@@ -21,7 +21,10 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<TaskModel>> CreateNewTask(TaskRequest taskRequest)
     {
         var task = taskRequest.GetTaskModel();
-        if (task is null) return NoContent();
+        if (task is null)
+        {
+            return NoContent();
+        }
 
         task.CreatedAt = DateTime.UtcNow;
         task.UpdatedAt = DateTime.UtcNow;
@@ -41,19 +44,41 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
         var task = await _taskContext.Tasks.FindAsync(id);
-        if (task is null) return NotFound();
+        if (task is null)
+        {
+            return NotFound();
+        }
         return Ok(task);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(Guid id)
+    public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
+        var existingTask = await _taskContext.Tasks.FindAsync(id);
+        var updatedTask = taskRequest.GetTaskModel();
+        if (existingTask is null && updatedTask is null)
+        {
+            return BadRequest();
+        }
+
+        existingTask = updatedTask;
+        existingTask.UpdatedAt = DateTime.UtcNow;
+        existingTask.Id = id;
+        await _taskContext.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(Guid id)
     {
+        var task = await _taskContext.Tasks.FindAsync(id);
+        if (task is null)
+        {
+            return BadRequest();
+        }
+
+        _taskContext.Tasks.Remove(task);
+        await _taskContext.SaveChangesAsync();
         return NoContent();
     }
 }
