@@ -23,7 +23,7 @@ public class TasksController : ControllerBase
         var task = taskRequest.GetTaskModel();
         if (task is null)
         {
-            return NoContent();
+            return BadRequest("Wrong type of Status or Priority");
         }
 
         task.CreatedAt = DateTime.UtcNow;
@@ -46,7 +46,7 @@ public class TasksController : ControllerBase
         var task = await _context.Tasks.FindAsync(id);
         if (task is null)
         {
-            return NotFound();
+            return NotFound("Your task doesn't exist!");
         }
         return Ok(task);
     }
@@ -54,11 +54,19 @@ public class TasksController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
+        if (string.IsNullOrEmpty(taskRequest.Title))
+        {
+            return BadRequest("Task title cannot be empty!");
+        }
         var existingTask = await _context.Tasks.FindAsync(id);
         var updatedTask = taskRequest.GetTaskModel();
-        if (existingTask is null || updatedTask is null || string.IsNullOrEmpty(updatedTask.Title))
+        if (updatedTask is null)
         {
-            return BadRequest();
+            return BadRequest("Wrong type of Status or Priority");
+        }
+        if (existingTask is null)
+        {
+            return BadRequest("Cannot find viable task!");
         }
 
         existingTask.Title = updatedTask.Title;
@@ -76,7 +84,7 @@ public class TasksController : ControllerBase
         var task = await _context.Tasks.FindAsync(id);
         if (task is null)
         {
-            return BadRequest();
+            return BadRequest("Cannot find viable task!");
         }
 
         _context.Tasks.Remove(task);
