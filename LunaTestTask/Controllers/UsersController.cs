@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using LunaTestTask.Models;
 using LunaTestTask.Models.Contexts;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +11,19 @@ namespace LunaTestTask.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly UserContext _context;
+    public const int MinPasswordLength = 8;
 
     public UsersController(UserContext context)
     {
         _context = context;
     }
+
+    private static bool IsValidPassword(string password)
+    {
+        return !string.IsNullOrEmpty(password) && password.Length > MinPasswordLength &&
+               Regex.IsMatch(password, @"[!@#$%^&*(),.?""{}|<>]") && 
+               password.Any(char.IsDigit);
+    } 
 
     [HttpPost("register")]
     public async Task<IActionResult> RegisterUser(UserModel userRequest)
@@ -24,13 +33,21 @@ public class UsersController : ControllerBase
             return Conflict("Username is already used!");
         }
 
-        if (await _context.Users.AnyAsync(i => i.EMail == userRequest.EMail))
+        if (await _context.Users.AnyAsync(i => i.Email == userRequest.Email))
         {
             return Conflict("Email is already used!");
         }
 
+        if (!IsValidPassword(userRequest.Password))
+        {
+            return ValidationProblem(
+                $"Password is invalid! it should be at least {MinPasswordLength}, have special character and digit!");
+        }
+
         userRequest.CreatedAt = DateTime.UtcNow;
         userRequest.UpdatedAt = DateTime.UtcNow;
+
+        userRequest.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userRequest.Password);
 
         _context.Users.Add(userRequest);
         await _context.SaveChangesAsync();
@@ -38,12 +55,19 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginUser(UserModel userRequest)
+    public async Task<ActionResult<string>> LoginUser(UserModel userRequest)
     {
-        var existingUser = await _context.Users.AnyAsync(i => i.Username == userRequest.Username || i.EMail == userRequest.EMail);
-        if (!existingUser)
+        var existingUser = await _context.Users
+            .Where(user => user.Username == userRequest.Username || user.Email == userRequest.Email)
+            .FirstOrDefaultAsync();
+        if (existingUser is null)
         {
             return NotFound("That username or email doesn't exist!");
+        }
+
+        if (!BCrypt.Net.BCrypt.EnhancedVerify(userRequest.Password, existingUser.Password))
+        {
+            return Conflict("Password doesn't match!");
         }
 
         return NoContent();
