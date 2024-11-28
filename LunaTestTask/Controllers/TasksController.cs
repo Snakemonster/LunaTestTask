@@ -1,4 +1,8 @@
+using LunaTestTask.Models;
+using LunaTestTask.Models.Contexts;
+using LunaTestTask.Models.Requests;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LunaTestTask.Controllers;
 
@@ -6,32 +10,49 @@ namespace LunaTestTask.Controllers;
 [Route("tasks")]
 public class TasksController : ControllerBase
 {
-    [HttpPost]
-    public async Task<IActionResult> CreateNewTask()
+    private readonly TaskContext _taskContext;
+
+    public TasksController(TaskContext context)
     {
-        return NoContent();
+        _taskContext = context;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TaskModel>> CreateNewTask(TaskRequest taskRequest)
+    {
+        var task = taskRequest.GetTaskModel();
+        if (task is null) return NoContent();
+
+        task.CreatedAt = DateTime.UtcNow;
+        task.UpdatedAt = DateTime.UtcNow;
+        _taskContext.Tasks.Add(task);
+        await _taskContext.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetTask), new {id = task.Id}, task);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllTasks()
+    public async Task<ActionResult<IEnumerable<TaskModel>>> GetAllTasks()
     {
-        return NoContent();
+        var users = await _taskContext.Tasks.ToListAsync();
+        return Ok(users);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetTask(string id)
+    public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
-        return NoContent();
+        var task = await _taskContext.Tasks.FindAsync(id);
+        if (task is null) return NotFound();
+        return Ok(task);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(string id)
+    public async Task<IActionResult> UpdateTask(Guid id)
     {
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTask(string id)
+    public async Task<IActionResult> DeleteTask(Guid id)
     {
         return NoContent();
     }

@@ -1,6 +1,22 @@
 @LunaTestTask_HostAddress = http://localhost:5096
 
-GET {{LunaTestTask_HostAddress}}/weatherforecast/
+### Get all tasks
+GET {{LunaTestTask_HostAddress}}/tasks
 Accept: application/json
 
-###
+### Get specific task
+@id = ceb54f42-0b5f-498e-8730-3b00a17d6614
+
+GET {{LunaTestTask_HostAddress}}/tasks/{{id}}
+Accept: application/json
+### Create new task
+
+POST {{LunaTestTask_HostAddress}}/tasks
+Content-Type: application/json
+
+{
+  "title": "New test one",
+  "dueDate": "2024-12-05T10:00:00Z",
+  "status": "InProgress",
+  "priority": "Low"
+}

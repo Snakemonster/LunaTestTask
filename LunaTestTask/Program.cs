@@ -13,6 +13,7 @@ public class Program
 
         builder.Services.AddControllers();
         builder.Services.AddDbContextPool<UserContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("LunaTestDB")));
+        builder.Services.AddDbContextPool<TaskContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("LunaTestDB")));
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
