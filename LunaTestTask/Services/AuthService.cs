@@ -19,25 +19,31 @@ public class AuthService
     public async Task<string> Create(UserModel user)
     {
         var tokenString = CreateNewToken(user);
-        var newTokenModel = new TokenModel
+        await _tokenContext.Tokens.AddAsync(new TokenModel
         {
             Token = tokenString,
             UserId = user.Id,
             ExpireAt = DateTime.UtcNow.AddDays(30)
-        };
-        await _tokenContext.Tokens.AddAsync(newTokenModel);
+        });
         await _tokenContext.SaveChangesAsync();
         return tokenString;
     }
 
     public async Task<string> Renew(UserModel user)
     {
-        var newToken = CreateNewToken(user);
         var oldToken = await _tokenContext.Tokens.Where(tok => tok.UserId == user.Id).FirstOrDefaultAsync();
-        if (oldToken is null) return string.Empty;
-        oldToken.Token = newToken;
+        _tokenContext.Tokens.Remove(oldToken);
+
+        var newTokenString = CreateNewToken(user);
+        var tokenString = CreateNewToken(user);
+        await _tokenContext.Tokens.AddAsync(new TokenModel
+        {
+            Token = tokenString,
+            UserId = user.Id,
+            ExpireAt = DateTime.UtcNow.AddDays(30)
+        });
         await _tokenContext.SaveChangesAsync();
-        return newToken;
+        return newTokenString;
     }
 
     private string CreateNewToken(UserModel user)

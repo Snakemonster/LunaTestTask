@@ -75,19 +75,20 @@ public class UsersController : ControllerBase
             return Conflict("Password doesn't match!");
         }
 
-        var existToken = await _tokenContext.Tokens.Where(Token => Token.UserId == existUser.Id).FirstOrDefaultAsync();
         string token;
-        if (existToken is not null && existToken.ExpireAt < DateTime.UtcNow)
+        var existToken = await _tokenContext.Tokens.Where(Token => Token.UserId == existUser.Id).FirstOrDefaultAsync();
+
+        if (existToken is null)
         {
-            token = existToken.Token;
+            token = await _authService.Create(existUser);
         }
-        else if (existToken is not null && existToken.ExpireAt >= DateTime.UtcNow)
+        else if (existToken.ExpireAt < DateTime.UtcNow)
         {
             token = await _authService.Renew(existUser);
         }
         else
         {
-            token = await _authService.Create(existUser);
+            token = existToken.Token;
         }
 
         return Ok(new {Token = token});
