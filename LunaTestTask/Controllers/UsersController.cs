@@ -12,13 +12,15 @@ namespace LunaTestTask.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly UserContext _context;
+    private readonly TokenContext _tokenContext;
     private AuthService _authService;
     public const int MinPasswordLength = 8;
 
-    public UsersController(UserContext context, AuthService authService)
+    public UsersController(UserContext context, AuthService authService, TokenContext tokenContext)
     {
         _context = context;
         _authService = authService;
+        _tokenContext = tokenContext;
     }
 
     private static bool IsValidPassword(string password)
@@ -60,20 +62,37 @@ public class UsersController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<string>> LoginUser(UserModel userRequest)
     {
-        var existingUser = await _context.Users
+        var existUser = await _context.Users
             .Where(user => user.Username == userRequest.Username || user.Email == userRequest.Email)
             .FirstOrDefaultAsync();
-        if (existingUser is null)
+        if (existUser is null)
         {
             return NotFound("That username or email doesn't exist!");
         }
 
-        if (!BCrypt.Net.BCrypt.EnhancedVerify(userRequest.Password, existingUser.Password))
+        if (!BCrypt.Net.BCrypt.EnhancedVerify(userRequest.Password, existUser.Password))
         {
             return Conflict("Password doesn't match!");
         }
 
-        var token = _authService.Create(userRequest);
+        var existToken = await _tokenContext.Tokens.Where(Token => Token.UserId == existUser.Id).FirstOrDefaultAsync();
+        string token;
+
+        if (existToken is not null)
+        {
+            token = existToken.Token;
+        }
+        else
+        {
+            token = _authService.Create(userRequest);
+            var newToken = new TokenModel
+            {
+                Token = token,
+                UserId = existUser.Id
+            };
+            _tokenContext.Add(newToken);
+            await _tokenContext.SaveChangesAsync();
+        }
 
         return Ok(new {Token = token});
     }
