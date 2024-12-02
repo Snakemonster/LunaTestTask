@@ -36,7 +36,7 @@ public class Program
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.TokenSecretKey))
             };
         });
-        builder.Services.AddTransient<AuthService>();
+        builder.Services.AddScoped<AuthService>();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 

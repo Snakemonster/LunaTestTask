@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using LunaTestTask.Models;
 using LunaTestTask.Models.Contexts;
+using LunaTestTask.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,11 +12,13 @@ namespace LunaTestTask.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly UserContext _context;
+    private AuthService _authService;
     public const int MinPasswordLength = 8;
 
-    public UsersController(UserContext context)
+    public UsersController(UserContext context, AuthService authService)
     {
         _context = context;
+        _authService = authService;
     }
 
     private static bool IsValidPassword(string password)
@@ -70,6 +73,8 @@ public class UsersController : ControllerBase
             return Conflict("Password doesn't match!");
         }
 
-        return NoContent();
+        var token = _authService.Create(userRequest);
+
+        return Ok(new {Token = token});
     }
 }
