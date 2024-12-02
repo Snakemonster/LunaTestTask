@@ -4,6 +4,12 @@
 GET {{LunaTestTask_HostAddress}}/tasks
 Accept: application/json
 
+### Get all tasks
+GET {{LunaTestTask_HostAddress}}/tasks
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInVuaXF1ZV9uYW1lIjoiVGVzdFVzZXIiLCJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwibmJmIjoxNzMzMTI4ODMxLCJleHAiOjE3MzU3MjA4MzEsImlhdCI6MTczMzEyODgzMX0.OipQ2uFEthFbzcGMjQmgyeApAxSFoWTBSsQ3otZZFQM
+Accept: application/json
+
+
 ### Get specific task
 @id = ceb54f42-0b5f-498e-8730-3b00a17d6614
 
@@ -38,5 +44,5 @@ Content-Type: application/json
 {
   "Username": "TestUser",
   "Email": "test@email.com",
-  "Password": "TestPasswrd&7"
+  "Password": "TestPassword&7"
 }
