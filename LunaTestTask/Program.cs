@@ -3,6 +3,7 @@ using LunaTestTask.Models.Contexts;
 using LunaTestTask.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using TokenContext = LunaTestTask.Models.Contexts.TokenContext;
 
@@ -34,6 +35,27 @@ public class Program
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.TokenSecretKey))
+            };
+
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    var tokenContext = context.HttpContext.RequestServices.GetRequiredService<TokenContext>();
+                    var token = (JsonWebToken)context.SecurityToken;
+
+                    if (token == null || string.IsNullOrWhiteSpace(token.EncodedToken))
+                    {
+                        context.Fail("Invalid token");
+                        return;
+                    }
+
+                    var tokenExist = await tokenContext.Tokens.AnyAsync(tok => tok.Token == token.EncodedToken);
+                    if (!tokenExist)
+                    {
+                        context.Fail("Token is not recognized!");
+                    }
+                }
             };
         });
         builder.Services.AddScoped<AuthService>();
