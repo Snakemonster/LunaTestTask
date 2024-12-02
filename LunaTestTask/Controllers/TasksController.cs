@@ -1,6 +1,7 @@
 using LunaTestTask.Models;
 using LunaTestTask.Models.Contexts;
 using LunaTestTask.Models.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<TaskModel>> CreateNewTask(TaskRequest taskRequest)
     {
         var task = taskRequest.GetTaskModel();
@@ -34,6 +36,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<TaskModel>>> GetAllTasks()
     {
         var users = await _context.Tasks.ToListAsync();
@@ -52,6 +55,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
         if (string.IsNullOrEmpty(taskRequest.Title))
@@ -79,6 +83,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteTask(Guid id)
     {
         var task = await _context.Tasks.FindAsync(id);
