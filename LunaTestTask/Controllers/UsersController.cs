@@ -77,21 +77,17 @@ public class UsersController : ControllerBase
 
         var existToken = await _tokenContext.Tokens.Where(Token => Token.UserId == existUser.Id).FirstOrDefaultAsync();
         string token;
-
-        if (existToken is not null)
+        if (existToken is not null && existToken.ExpireAt < DateTime.UtcNow)
         {
             token = existToken.Token;
         }
+        else if (existToken is not null && existToken.ExpireAt >= DateTime.UtcNow)
+        {
+            token = await _authService.Renew(existUser);
+        }
         else
         {
-            token = _authService.Create(userRequest);
-            var newToken = new TokenModel
-            {
-                Token = token,
-                UserId = existUser.Id
-            };
-            _tokenContext.Add(newToken);
-            await _tokenContext.SaveChangesAsync();
+            token = await _authService.Create(existUser);
         }
 
         return Ok(new {Token = token});
