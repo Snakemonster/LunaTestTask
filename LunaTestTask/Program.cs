@@ -16,14 +16,6 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
-
-        var secretKey = Configuration.TokenSecretKey = builder.Configuration.GetSection("TokenSecretKey").Value;
-        if (string.IsNullOrEmpty(secretKey))
-        {
-            throw new ArgumentException("Secret key is empty or null!");
-        }
-
-        Configuration.TokenSecretKey = secretKey;
         builder.Services.AddControllers();
         builder.Services.AddDbContextPool<UserContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("LunaTestDB")));
         builder.Services.AddDbContextPool<TaskContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("LunaTestDB")));
