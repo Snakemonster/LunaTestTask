@@ -58,7 +58,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
-        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        if (!await _context.IsValidId(id)) return NotFound("Cannot found task with that id");
         var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
         var task = await _context.GetTask(userId, id);
         return Ok(task);
@@ -68,7 +68,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
-        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        if (!await _context.IsValidId(id)) return NotFound("Cannot found task with that id");
         var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
 
         var updatedTask = taskRequest.GetTaskModel();
@@ -82,7 +82,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteTask(Guid id)
     {
-        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        if (!await _context.IsValidId(id)) return NotFound("Cannot found task with that id");
         var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
         await _context.DeleteTask(userId, id);
         return NoContent();

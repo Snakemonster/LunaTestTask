@@ -16,7 +16,7 @@ public class TaskContext : DbContext
         modelBuilder.Entity<TaskModel>().Property(i => i.Priority).HasConversion<string>();
     }
 
-    public async Task<bool> CheckId(Guid id)
+    public async Task<bool> IsValidId(Guid id)
     {
         return await Tasks.FindAsync(id) is not null;
     }
