@@ -17,4 +17,9 @@ public class TokenContext : DbContext
     {
         return await Tokens.Where(token => token.Token == authKey.Substring("Bearer ".Length).Trim()).FirstOrDefaultAsync();
     }
+
+    public async Task<Guid> GetUserId(string authKey)
+    {
+        return (await Tokens.Where(token => token.Token == authKey.Substring("Bearer ".Length).Trim()).FirstOrDefaultAsync()).UserId;
+    }
 }

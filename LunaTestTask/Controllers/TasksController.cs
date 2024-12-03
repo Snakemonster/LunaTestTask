@@ -25,19 +25,12 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<TaskModel>> CreateNewTask(TaskRequest taskRequest)
     {
         var task = taskRequest.GetTaskModel();
-        if (task is null)
-        {
-            return BadRequest("Wrong type of Status or Priority");
-        }
+        if (task.Item1 is null) return BadRequest($"{task.Item2}");
 
-        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
 
-        task.CreatedAt = DateTime.UtcNow;
-        task.UpdatedAt = DateTime.UtcNow;
-        task.UserId = authToken.UserId;
-        _context.Tasks.Add(task);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetTask), new {id = task.Id}, task);
+        await _context.CreateTask(userId, task.Item1);
+        return CreatedAtAction(nameof(GetTask), new {id = task.Item1.Id}, task);
     }
 
     //TODO: pagination to GetAllTasks
@@ -48,7 +41,7 @@ public class TasksController : ControllerBase
         [FromQuery(Name = "Status")] string? statusHeader,
         [FromQuery(Name = "Priority")] string? priorityHeader)
     {
-        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
 
         var filter = new TaskFilter
         {
@@ -57,7 +50,7 @@ public class TasksController : ControllerBase
             Priority = !string.IsNullOrEmpty(priorityHeader) && Enum.TryParse<TaskPriority>(priorityHeader, true, out var priority) ? priority : null
         };
 
-        var tasks = await _context.GetAllTasks(authToken, filter);
+        var tasks = await _context.GetAllTasks(userId, filter);
         return Ok(tasks);
     }
 
@@ -65,14 +58,9 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
-        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
-        if (authToken.UserId != id) return NoContent();
-    
-        var task = await _context.Tasks.FindAsync(id);
-        if (task is null)
-        {
-            return NotFound("Your task doesn't exist!");
-        }
+        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var task = await _context.GetTask(userId, id);
         return Ok(task);
     }
 
@@ -80,30 +68,13 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
-        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
-        if (authToken.UserId != id) return NoContent();
+        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
 
-        if (string.IsNullOrEmpty(taskRequest.Title))
-        {
-            return BadRequest("Task title cannot be empty!");
-        }
-        var existingTask = await _context.Tasks.FindAsync(id);
         var updatedTask = taskRequest.GetTaskModel();
-        if (updatedTask is null)
-        {
-            return BadRequest("Wrong type of Status or Priority");
-        }
-        if (existingTask is null)
-        {
-            return BadRequest("Cannot find viable task!");
-        }
+        if (updatedTask.Item1 is null) return BadRequest($"{updatedTask.Item2}");
 
-        existingTask.Title = updatedTask.Title;
-        existingTask.Description = updatedTask.Description;
-        existingTask.Priority = updatedTask.Priority;
-        existingTask.Status = updatedTask.Status;
-        existingTask.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
+        await _context.UpdateTask(userId, id, updatedTask.Item1);
         return NoContent();
     }
 
@@ -111,17 +82,9 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteTask(Guid id)
     {
-        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
-        if (authToken.UserId != id) return NoContent();
-
-        var task = await _context.Tasks.FindAsync(id);
-        if (task is null)
-        {
-            return BadRequest("Cannot find viable task!");
-        }
-
-        _context.Tasks.Remove(task);
-        await _context.SaveChangesAsync();
+        if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
+        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        await _context.DeleteTask(userId, id);
         return NoContent();
     }
 }
