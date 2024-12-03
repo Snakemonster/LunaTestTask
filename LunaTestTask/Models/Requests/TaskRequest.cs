@@ -13,12 +13,12 @@ public class TaskRequest
     public (TaskModel?, string) GetTaskModel()
     {
         var errors = new StringBuilder();
-        if (string.IsNullOrEmpty(Title)) errors.Append("Empty Title, ");
+        if (string.IsNullOrEmpty(Title)) errors.Append("Title cannot be empty\n");
 
-        if (DueDate < DateTime.UtcNow) errors.Append("Task cannot have dueDate in past, ");
+        if (DueDate < DateTime.UtcNow) errors.Append("Task cannot have dueDate in past\n");
 
         TaskStatus newStatus;
-        if (!Enum.TryParse(Status, out newStatus)) errors.Append("Unknown type of Status (should be Pending, InProgress or Completed), ");
+        if (!Enum.TryParse(Status, out newStatus)) errors.Append("Unknown type of Status (should be Pending, InProgress or Completed)\n");
 
         TaskPriority newTaskPriority;
         if (!Enum.TryParse(Priority, out newTaskPriority)) errors.Append("Unknown type of Priority (should be Low, Medium or High)");

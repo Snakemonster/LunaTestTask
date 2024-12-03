@@ -3,7 +3,6 @@ using LunaTestTask.Models;
 using LunaTestTask.Models.Contexts;
 using LunaTestTask.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LunaTestTask.Controllers;
 
@@ -33,38 +32,22 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> RegisterUser(UserModel userRequest)
     {
-        if (await _context.Users.AnyAsync(i => i.Username == userRequest.Username))
-        {
-            return Conflict("Username is already used!");
-        }
+        var userCheck = await _context.ValidUniqueUser(userRequest);
+        if (!string.IsNullOrEmpty(userCheck)) return BadRequest(userCheck);
 
-        if (await _context.Users.AnyAsync(i => i.Email == userRequest.Email))
-        {
-            return Conflict("Email is already used!");
-        }
-
-        if (!IsValidPassword(userRequest.Password))
-        {
-            return ValidationProblem(
-                $"Password is invalid! it should be at least {MinPasswordLength}, have special character and digit!");
-        }
-
-        userRequest.CreatedAt = DateTime.UtcNow;
-        userRequest.UpdatedAt = DateTime.UtcNow;
+        if (!IsValidPassword(userRequest.Password)) return ValidationProblem(
+            $"Password is invalid! it should be at least {MinPasswordLength}, have special character and digit!");
 
         userRequest.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(userRequest.Password);
 
-        _context.Users.Add(userRequest);
-        await _context.SaveChangesAsync();
+        await _context.AddUser(userRequest);
         return NoContent();
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<string>> LoginUser(UserModel userRequest)
     {
-        var existUser = await _context.Users
-            .Where(user => user.Username == userRequest.Username || user.Email == userRequest.Email)
-            .FirstOrDefaultAsync();
+        var existUser = await _context.GetUser(userRequest);
         if (existUser is null)
         {
             return NotFound("That username or email doesn't exist!");
