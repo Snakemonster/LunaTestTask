@@ -76,7 +76,7 @@ public class UsersController : ControllerBase
         }
 
         string token;
-        var existToken = await _tokenContext.Tokens.Where(Token => Token.UserId == existUser.Id).FirstOrDefaultAsync();
+        var existToken = await _tokenContext.GetTokenByUserId(existUser.Id);
 
         if (existToken is null)
         {

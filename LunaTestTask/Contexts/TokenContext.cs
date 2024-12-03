@@ -4,7 +4,7 @@ namespace LunaTestTask.Models.Contexts;
 
 public class TokenContext : DbContext
 {
-    public DbSet<TokenModel> Tokens { get; set; }
+    private DbSet<TokenModel> Tokens { get; set; }
     public TokenContext(DbContextOptions<TokenContext> options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -19,8 +19,25 @@ public class TokenContext : DbContext
         return await Tokens.Where(token => token.Token == authKey).FirstOrDefaultAsync();
     }
 
-    public async Task<Guid> GetUserId(string authKey)
+    public async Task<Guid> GetTokenUserId(string authKey)
     {
         return (await GetToken(authKey)).UserId;
+    }
+
+    public async Task<TokenModel?> GetTokenByUserId(Guid userId)
+    {
+        return await Tokens.Where(Token => Token.UserId == userId).FirstOrDefaultAsync();
+    }
+
+    public async Task CreateNewToken(TokenModel tokenModel)
+    {
+        await Tokens.AddAsync(tokenModel);
+        await SaveChangesAsync();
+    }
+
+    public async Task DeleteToken(TokenModel tokenModel)
+    {
+        Tokens.Remove(tokenModel);
+        await SaveChangesAsync();
     }
 }

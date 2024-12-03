@@ -27,7 +27,7 @@ public class TasksController : ControllerBase
         var task = taskRequest.GetTaskModel();
         if (task.Item1 is null) return BadRequest($"{task.Item2}");
 
-        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
 
         await _context.CreateTask(userId, task.Item1);
         return CreatedAtAction(nameof(GetTask), new {id = task.Item1.Id}, task);
@@ -41,7 +41,7 @@ public class TasksController : ControllerBase
         [FromQuery(Name = "Status")] string? statusHeader,
         [FromQuery(Name = "Priority")] string? priorityHeader)
     {
-        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
 
         var filter = new TaskFilter
         {
@@ -59,7 +59,7 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
         if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
-        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
         var task = await _context.GetTask(userId, id);
         return Ok(task);
     }
@@ -69,7 +69,7 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
         if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
-        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
 
         var updatedTask = taskRequest.GetTaskModel();
         if (updatedTask.Item1 is null) return BadRequest($"{updatedTask.Item2}");
@@ -83,7 +83,7 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> DeleteTask(Guid id)
     {
         if (await _context.CheckId(id)) return NotFound("Cannot found task with that id");
-        var userId = await _tokenContext.GetUserId(HttpContext.Request.Headers.Authorization.ToString());
+        var userId = await _tokenContext.GetTokenUserId(HttpContext.Request.Headers.Authorization.ToString());
         await _context.DeleteTask(userId, id);
         return NoContent();
     }

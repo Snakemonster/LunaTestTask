@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using LunaTestTask.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TokenContext = LunaTestTask.Models.Contexts.TokenContext;
 
@@ -19,7 +18,7 @@ public class AuthService
     public async Task<string> Create(UserModel user)
     {
         var tokenString = CreateNewToken(user);
-        await _tokenContext.Tokens.AddAsync(new TokenModel
+        await _tokenContext.CreateNewToken(new TokenModel
         {
             Token = tokenString,
             UserId = user.Id,
@@ -31,12 +30,11 @@ public class AuthService
 
     public async Task<string> Renew(UserModel user)
     {
-        var oldToken = await _tokenContext.Tokens.Where(tok => tok.UserId == user.Id).FirstOrDefaultAsync();
-        _tokenContext.Tokens.Remove(oldToken);
+        await _tokenContext.DeleteToken(await _tokenContext.GetTokenByUserId(user.Id));
 
         var newTokenString = CreateNewToken(user);
         var tokenString = CreateNewToken(user);
-        await _tokenContext.Tokens.AddAsync(new TokenModel
+        await _tokenContext.CreateNewToken(new TokenModel
         {
             Token = tokenString,
             UserId = user.Id,
