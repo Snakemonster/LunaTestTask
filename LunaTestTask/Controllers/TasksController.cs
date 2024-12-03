@@ -3,7 +3,7 @@ using LunaTestTask.Models.Contexts;
 using LunaTestTask.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using TaskStatus = LunaTestTask.Models.TaskStatus;
 
 namespace LunaTestTask.Controllers;
 
@@ -30,8 +30,7 @@ public class TasksController : ControllerBase
             return BadRequest("Wrong type of Status or Priority");
         }
 
-        var rawToken = HttpContext.Request.Headers.Authorization.ToString();
-        var authToken = await _tokenContext.Tokens.Where(token => token.Token == rawToken).FirstOrDefaultAsync();
+        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
 
         task.CreatedAt = DateTime.UtcNow;
         task.UpdatedAt = DateTime.UtcNow;
@@ -41,22 +40,32 @@ public class TasksController : ControllerBase
         return CreatedAtAction(nameof(GetTask), new {id = task.Id}, task);
     }
 
+    //TODO: pagination to GetAllTasks
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<TaskModel>>> GetAllTasks()
+    public async Task<ActionResult<IEnumerable<TaskModel>>> GetAllTasks(
+        [FromQuery(Name = "DueDate")] string? dueDateHeader,
+        [FromQuery(Name = "Status")] string? statusHeader,
+        [FromQuery(Name = "Priority")] string? priorityHeader)
     {
-        var rawToken = HttpContext.Request.Headers.Authorization.ToString();
-        var authToken = await _tokenContext.Tokens.Where(token => token.Token == rawToken).FirstOrDefaultAsync();
+        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
 
-        var users = await _context.Tasks.Where(token => token.UserId == authToken.UserId).ToListAsync();
-        return Ok(users);
+        var filter = new TaskFilter
+        {
+            DueDate = !string.IsNullOrEmpty(dueDateHeader) && DateTime.TryParse(dueDateHeader, out var dueDate) ? dueDate : null,
+            Status = !string.IsNullOrEmpty(statusHeader) && Enum.TryParse<TaskStatus>(statusHeader, true, out var status) ? status : null,
+            Priority = !string.IsNullOrEmpty(priorityHeader) && Enum.TryParse<TaskPriority>(priorityHeader, true, out var priority) ? priority : null
+        };
+
+        var tasks = await _context.GetAllTasks(authToken, filter);
+        return Ok(tasks);
     }
 
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<TaskModel>> GetTask(Guid id)
     {
-        var rawToken = HttpContext.Request.Headers.Authorization.ToString();
-        var authToken = await _tokenContext.Tokens.Where(token => token.Token == rawToken).FirstOrDefaultAsync();
+        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
         if (authToken.UserId != id) return NoContent();
     
         var task = await _context.Tasks.FindAsync(id);
@@ -71,8 +80,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateTask(Guid id, TaskRequest taskRequest)
     {
-        var rawToken = HttpContext.Request.Headers.Authorization.ToString();
-        var authToken = await _tokenContext.Tokens.Where(token => token.Token == rawToken).FirstOrDefaultAsync();
+        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
         if (authToken.UserId != id) return NoContent();
 
         if (string.IsNullOrEmpty(taskRequest.Title))
@@ -103,8 +111,7 @@ public class TasksController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteTask(Guid id)
     {
-        var rawToken = HttpContext.Request.Headers.Authorization.ToString();
-        var authToken = await _tokenContext.Tokens.Where(token => token.Token == rawToken).FirstOrDefaultAsync();
+        var authToken = await _tokenContext.GetToken(HttpContext.Request.Headers.Authorization.ToString());
         if (authToken.UserId != id) return NoContent();
 
         var task = await _context.Tasks.FindAsync(id);

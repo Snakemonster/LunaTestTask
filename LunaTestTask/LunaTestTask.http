@@ -6,7 +6,7 @@ Accept: application/json
 
 ### Get all tasks
 GET {{LunaTestTask_HostAddress}}/tasks
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInVuaXF1ZV9uYW1lIjoiVGVzdFVzZXIiLCJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwibmJmIjoxNzMzMTI4ODMxLCJleHAiOjE3MzU3MjA4MzEsImlhdCI6MTczMzEyODgzMX0.OipQ2uFEthFbzcGMjQmgyeApAxSFoWTBSsQ3otZZFQM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5YmY1NmM0LTUwN2UtNGNmZi04OTY1LWQ3MjhmMDk4NTZmMSIsInVuaXF1ZV9uYW1lIjoiVGVzdFVzZXIiLCJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwibmJmIjoxNzMzMTY3MjE4LCJleHAiOjE3MzU3NTkyMTgsImlhdCI6MTczMzE2NzIxOH0.uAza0ADdSfYobIoj9aTYqe73yuOseVOFCTV-pO_G4gA
 Accept: application/json
 
 
@@ -14,6 +14,7 @@ Accept: application/json
 @id = ceb54f42-0b5f-498e-8730-3b00a17d6614
 
 GET {{LunaTestTask_HostAddress}}/tasks/{{id}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU5YmY1NmM0LTUwN2UtNGNmZi04OTY1LWQ3MjhmMDk4NTZmMSIsInVuaXF1ZV9uYW1lIjoiVGVzdFVzZXIiLCJlbWFpbCI6InRlc3RAZW1haWwuY29tIiwibmJmIjoxNzMzMTY3MjE4LCJleHAiOjE3MzU3NTkyMTgsImlhdCI6MTczMzE2NzIxOH0.uAza0ADdSfYobIoj9aTYqe73yuOseVOFCTV-pO_G4gA
 Accept: application/json
 ### Create new task
 

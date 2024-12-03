@@ -12,4 +12,9 @@ public class TokenContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<TokenModel>().ToTable("Token");
     }
+
+    public async Task<TokenModel?> GetToken(string authKey)
+    {
+        return await Tokens.Where(token => token.Token == authKey.Substring("Bearer ".Length).Trim()).FirstOrDefaultAsync();
+    }
 }
