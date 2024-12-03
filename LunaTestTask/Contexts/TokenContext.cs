@@ -15,11 +15,12 @@ public class TokenContext : DbContext
 
     public async Task<TokenModel?> GetToken(string authKey)
     {
-        return await Tokens.Where(token => token.Token == authKey.Substring("Bearer ".Length).Trim()).FirstOrDefaultAsync();
+        if (authKey.StartsWith("Bearer ")) authKey = authKey.Substring("Bearer ".Length).Trim();
+        return await Tokens.Where(token => token.Token == authKey).FirstOrDefaultAsync();
     }
 
     public async Task<Guid> GetUserId(string authKey)
     {
-        return (await Tokens.Where(token => token.Token == authKey.Substring("Bearer ".Length).Trim()).FirstOrDefaultAsync()).UserId;
+        return (await GetToken(authKey)).UserId;
     }
 }

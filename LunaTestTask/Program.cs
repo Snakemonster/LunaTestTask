@@ -50,8 +50,8 @@ public class Program
                         return;
                     }
 
-                    var tokenExist = await tokenContext.Tokens.AnyAsync(tok => tok.Token == token.EncodedToken);
-                    if (!tokenExist)
+                    var tokenExist = await tokenContext.GetToken(token.EncodedToken);
+                    if (tokenExist is null)
                     {
                         context.Fail("Token is not recognized!");
                     }
