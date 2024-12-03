@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using LunaTestTask.Models;
 using LunaTestTask.Models.Contexts;
+using LunaTestTask.Models.Requests;
 using LunaTestTask.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -45,34 +46,25 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<string>> LoginUser(UserModel userRequest)
+    public async Task<ActionResult<string>> LoginUser(UserRequest userRequest)
     {
-        var existUser = await _context.GetUser(userRequest);
-        if (existUser is null)
-        {
-            return NotFound("That username or email doesn't exist!");
-        }
+        if (string.IsNullOrEmpty(userRequest.Username) && string.IsNullOrEmpty(userRequest.Email))
+            return BadRequest("Empty Username or Email");
 
-        if (!BCrypt.Net.BCrypt.EnhancedVerify(userRequest.Password, existUser.Password))
-        {
-            return Conflict("Password doesn't match!");
-        }
+        var existUser = await _context.GetUser(userRequest);
+        if (existUser is null) return NotFound("That username or email doesn't exist!");
+
+        if (!BCrypt.Net.BCrypt.EnhancedVerify(userRequest.Password, existUser.Password)) return Conflict("Password doesn't match!");
 
         string token;
         var existToken = await _tokenContext.GetTokenByUserId(existUser.Id);
 
-        if (existToken is null)
-        {
+        if (existToken is null) 
             token = await _authService.Create(existUser);
-        }
         else if (existToken.ExpireAt < DateTime.UtcNow)
-        {
             token = await _authService.Renew(existUser);
-        }
         else
-        {
             token = existToken.Token;
-        }
 
         return Ok(new {Token = token});
     }

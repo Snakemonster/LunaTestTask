@@ -1,4 +1,5 @@
 using System.Text;
+using LunaTestTask.Models.Requests;
 using Microsoft.EntityFrameworkCore;
 
 namespace LunaTestTask.Models.Contexts;
@@ -23,7 +24,7 @@ public class UserContext : DbContext
         return errors.ToString();
     }
 
-    public async Task<UserModel> GetUser(UserModel userModel)
+    public async Task<UserModel> GetUser(UserRequest userModel)
     {
         return await Users.Where(user => user.Username == userModel.Username || user.Email == userModel.Email)
             .FirstOrDefaultAsync();;
